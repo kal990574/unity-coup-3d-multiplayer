@@ -39,8 +39,8 @@ namespace Coup.Scene
         void InitializeUI()
         {
             // GameManager 찾기
-            gameManager = FindObjectOfType<GameManager>();
-            sceneSetup = FindObjectOfType<SceneSetup>();
+            gameManager = FindFirstObjectByType<GameManager>();
+            sceneSetup = FindFirstObjectByType<SceneSetup>();
             
             if (gameManager == null)
             {

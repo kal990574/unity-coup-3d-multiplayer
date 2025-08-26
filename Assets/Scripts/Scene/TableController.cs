@@ -81,8 +81,10 @@ namespace Coup.Scene
                 Vector3 playerPos = GetPlayerPosition(i, 6);
                 Gizmos.DrawWireSphere(playerPos, 0.3f);
                 
-                // 플레이어 번호 표시
+#if UNITY_EDITOR
+                // 플레이어 번호 표시 (에디터에서만)
                 UnityEditor.Handles.Label(playerPos + Vector3.up, $"P{i+1}");
+#endif
             }
         }
     }

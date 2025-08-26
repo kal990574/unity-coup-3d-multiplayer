@@ -48,7 +48,7 @@ namespace Coup.Scene
         void SetupLighting()
         {
             // 메인 라이트 찾기 또는 생성
-            Light mainLight = FindObjectOfType<Light>();
+            Light mainLight = FindFirstObjectByType<Light>();
             if (mainLight == null)
             {
                 GameObject lightObj = new GameObject("Main Light");
@@ -215,7 +215,7 @@ namespace Coup.Scene
             canvasObj.AddComponent<GraphicRaycaster>();
             
             // EventSystem 생성
-            if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 GameObject eventSystemObj = new GameObject("EventSystem");
                 eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -328,7 +328,7 @@ namespace Coup.Scene
 
         void SetupGameManager()
         {
-            gameManager = FindObjectOfType<GameManager>();
+            gameManager = FindFirstObjectByType<GameManager>();
             if (gameManager == null)
             {
                 GameObject gameManagerObj = new GameObject("GameManager");
