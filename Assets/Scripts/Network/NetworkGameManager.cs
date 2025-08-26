@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 using Coup.Game;
 
 namespace Coup.Network
@@ -61,6 +62,13 @@ namespace Coup.Network
         {
             networkGameState.OnValueChanged -= OnGameStateChanged;
             
+            // NetworkManager 이벤트 구독 해제
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+                NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+            }
+            
             if (Instance == this)
             {
                 Instance = null;
@@ -91,13 +99,24 @@ namespace Coup.Network
                 if (responseTimer <= 0f)
                 {
                     // 시간 초과 - 액션 자동 승인
-                    ResolveActionServerRpc(pendingAction.Value, ResponseType.Allow, 0);
+                    var action = pendingAction.Value;
+                    ResolveActionServerRpc(action.playerId, (int)action.actionType, action.targetPlayerId, (int)ResponseType.Allow, 0, default);
                 }
             }
         }
         
+        void Start()
+        {
+            // NetworkManager 이벤트 구독 (Start에서 처리)
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+                NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+            }
+        }
+
         // 플레이어가 서버에 접속했을 때
-        public override void OnClientConnectedCallback(ulong clientId)
+        void OnClientConnected(ulong clientId)
         {
             if (!IsServer) return;
             
@@ -124,7 +143,7 @@ namespace Coup.Network
         }
         
         // 플레이어가 서버에서 연결 해제했을 때
-        public override void OnClientDisconnectCallback(ulong clientId)
+        void OnClientDisconnected(ulong clientId)
         {
             if (!IsServer) return;
             
@@ -236,9 +255,12 @@ namespace Coup.Network
         }
         
         [ServerRpc(RequireOwnership = false)]
-        public void ResolveActionServerRpc(GameAction action, ResponseType response, ulong responderId, ServerRpcParams rpcParams = default)
+        public void ResolveActionServerRpc(int playerId, int actionType, int targetPlayerId, int responseType, ulong responderId, ServerRpcParams rpcParams = default)
         {
             if (!pendingAction.HasValue) return;
+            
+            var action = new GameAction(playerId, (ActionType)actionType, targetPlayerId);
+            var response = (ResponseType)responseType;
             
             if (response == ResponseType.Challenge)
             {
@@ -301,7 +323,7 @@ namespace Coup.Network
             }
             
             // 클라이언트들에게 액션 결과 알림
-            NotifyActionExecutedClientRpc(action);
+            NotifyActionExecutedClientRpc(action.playerId, (int)action.actionType, action.targetPlayerId);
             OnActionPerformed?.Invoke(action);
             
             // 게임 종료 체크
@@ -316,7 +338,15 @@ namespace Coup.Network
             var actor = networkPlayers[action.playerId];
             CardType requiredCard = GameRules.GetRequiredCard(action.actionType);
             
-            bool hasCard = actor.influences.Any(c => c.cardType == requiredCard);
+            bool hasCard = false;
+            foreach (var card in actor.influences)
+            {
+                if (card.cardType == requiredCard)
+                {
+                    hasCard = true;
+                    break;
+                }
+            }
             
             if (hasCard)
             {
@@ -408,7 +438,12 @@ namespace Coup.Network
         
         bool CheckGameEnd()
         {
-            int alivePlayers = networkPlayers.Count(p => p.isAlive);
+            int alivePlayers = 0;
+            foreach (var player in networkPlayers)
+            {
+                if (player.isAlive) alivePlayers++;
+            }
+            
             if (alivePlayers <= 1)
             {
                 int winnerId = -1;
@@ -511,8 +546,9 @@ namespace Coup.Network
         }
         
         [ClientRpc]
-        void NotifyActionExecutedClientRpc(GameAction action)
+        void NotifyActionExecutedClientRpc(int playerId, int actionType, int targetPlayerId)
         {
+            var action = new GameAction(playerId, (ActionType)actionType, targetPlayerId);
             Debug.Log($"액션 실행됨: {action.actionType} by Player {action.playerId}");
             OnActionPerformed?.Invoke(action);
         }
@@ -551,7 +587,7 @@ namespace Coup.Network
         {
             if (IsClient && pendingAction.HasValue)
             {
-                ResolveActionServerRpc(action, response, NetworkManager.Singleton.LocalClientId);
+                ResolveActionServerRpc(action.playerId, (int)action.actionType, action.targetPlayerId, (int)response, NetworkManager.Singleton.LocalClientId, default);
             }
         }
         

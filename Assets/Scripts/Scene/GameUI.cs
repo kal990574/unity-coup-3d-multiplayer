@@ -194,6 +194,10 @@ namespace Coup.Scene
                     {
                         currentPlayerText.text = $"현재 턴: {currentPlayer.playerName} | 코인: {currentPlayer.coins} | 영향력: {currentPlayer.GetInfluenceCount()}";
                     }
+                    else
+                    {
+                        currentPlayerText.text = "플레이어 정보를 불러오는 중...";
+                    }
                     break;
                     
                 case GameState.WaitingForResponse:
@@ -213,17 +217,28 @@ namespace Coup.Scene
             bool isPlayerTurn = gameManager.currentState == GameState.Playing;
             var currentPlayer = gameManager.GetCurrentPlayer();
             
+            // 기본적으로 모든 버튼 비활성화
             foreach (var button in allActionButtons)
             {
                 if (button != null)
                 {
-                    button.interactable = isPlayerTurn;
+                    button.interactable = false;
                 }
             }
             
-            // 개별 버튼 조건 확인
+            // 현재 플레이어가 있고 플레이어 턴일 때만 활성화
             if (currentPlayer != null && isPlayerTurn)
             {
+                // 기본 버튼들 활성화
+                foreach (var button in allActionButtons)
+                {
+                    if (button != null)
+                    {
+                        button.interactable = true;
+                    }
+                }
+                
+                // 개별 버튼 조건 확인
                 if (coupButton != null)
                     coupButton.interactable = currentPlayer.CanAfford(GameRules.COUP_COST);
                     
@@ -252,13 +267,13 @@ namespace Coup.Scene
             for (int i = 0; i < gameManager.players.Count; i++)
             {
                 var player = gameManager.players[i];
-                if (player.isAlive)
+                if (player != null && player.isAlive)
                 {
                     for (int j = 0; j < player.influences.Count; j++)
                     {
                         // 현재 플레이어의 카드만 표시 (나중에 권한 기반으로 변경)
                         var currentPlayer = gameManager.GetCurrentPlayer();
-                        if (i == currentPlayer.playerId)
+                        if (currentPlayer != null && i == currentPlayer.playerId)
                         {
                             sceneSetup.ShowPlayerCard(i, j, player.influences[j].cardType);
                         }

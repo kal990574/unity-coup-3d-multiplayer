@@ -1,0 +1,36 @@
+Unity Editor version:    6000.0.53f1 (283510a092d9)
+Branch:                  6000.0/staging
+Build type:              Release
+Batch mode:              YES
+macOS version:           Version 15.4 (Build 24E248)
+Darwin version:          24.4.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        32768 MB
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-mambasa" at "2025-08-26T08:47:42.201578Z"
+Launching external process: /Applications/Unity/Hub/Editor/6000.0.53f1/Unity.app/Contents/Resources/PackageManager/Server/UnityPackageManager
+
+COMMAND LINE ARGUMENTS:
+/Applications/Unity/Hub/Editor/6000.0.53f1/Unity.app/Contents/MacOS/Unity
+-batchmode
+-quit
+-projectPath
+.
+-executeMethod
+UnityEditor.Build.Reporting.BuildReport
+-logFile
+compile_log.txt
+Successfully changed project path to: /Users/mambasa/UnityProjects/Coup3DMultiplayer
+/Users/mambasa/UnityProjects/Coup3DMultiplayer
+It looks like another Unity instance is running with this project open.
+
+Multiple Unity instances cannot open the same project.
+
+Project: /Users/mambasa/UnityProjects/Coup3DMultiplayer
+Fatal Error! It looks like another Unity instance is running with this project open.
+
+Multiple Unity instances cannot open the same project.
+
+Project: /Users/mambasa/UnityProjects/Coup3DMultiplayer
+[Package Manager] Server process was shutdown

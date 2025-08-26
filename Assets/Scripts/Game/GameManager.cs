@@ -16,6 +16,10 @@ namespace Coup.Game
         public List<Card> deck = new List<Card>();
         public int currentPlayerIndex = 0;
         
+        [Header("Testing/Debug")]
+        [SerializeField] private int testPlayerCount = 3;
+        [SerializeField] private bool debugMode = false;
+        
         private PendingResponse? pendingResponse;
         private GameAction lastAction;
 
@@ -409,6 +413,8 @@ namespace Coup.Game
         // 디버그용 메서드들
         public Player GetCurrentPlayer()
         {
+            if (players.Count == 0 || currentPlayerIndex >= players.Count || currentPlayerIndex < 0)
+                return null;
             return players[currentPlayerIndex];
         }
 
@@ -420,6 +426,118 @@ namespace Coup.Game
         public bool IsPlayerTurn(int playerId)
         {
             return currentPlayerIndex == playerId && currentState == GameState.Playing;
+        }
+
+        // Inspector에서 사용할 수 있는 테스트 메서드들
+        [ContextMenu("Add Test Players")]
+        public void AddTestPlayers()
+        {
+            if (currentState != GameState.WaitingForPlayers)
+            {
+                Debug.LogWarning("게임이 진행 중일 때는 플레이어를 추가할 수 없습니다.");
+                return;
+            }
+
+            for (int i = 0; i < testPlayerCount; i++)
+            {
+                if (players.Count >= maxPlayers) break;
+                AddPlayer($"Player {players.Count + 1}");
+            }
+            
+            Debug.Log($"{testPlayerCount}명의 테스트 플레이어를 추가했습니다. 총 {players.Count}명");
+        }
+
+        [ContextMenu("Start Test Game")]
+        public void StartTestGame()
+        {
+            if (players.Count < GameRules.MIN_PLAYERS)
+            {
+                AddTestPlayers();
+            }
+            
+            if (StartGame())
+            {
+                Debug.Log("테스트 게임이 시작되었습니다!");
+                PrintGameState();
+            }
+        }
+
+        [ContextMenu("Reset Game")]
+        public void ResetGame()
+        {
+            InitializeGame();
+            Debug.Log("게임이 리셋되었습니다.");
+        }
+
+        [ContextMenu("Print Game State")]
+        public void PrintGameState()
+        {
+            Debug.Log($"=== 게임 상태 ===");
+            Debug.Log($"State: {currentState}");
+            Debug.Log($"Players: {players.Count}");
+            Debug.Log($"Deck: {deck.Count} cards");
+            Debug.Log($"Current Player Index: {currentPlayerIndex}");
+            
+            if (debugMode)
+            {
+                Debug.Log("\n=== 플레이어 정보 ===");
+                for (int i = 0; i < players.Count; i++)
+                {
+                    var player = players[i];
+                    string influences = string.Join(", ", player.influences.Select(c => c.cardType.ToString()));
+                    Debug.Log($"Player {i}: {player.playerName} | Coins: {player.coins} | Alive: {player.isAlive} | Cards: [{influences}]");
+                }
+                
+                Debug.Log($"\n=== 덱 정보 ===");
+                var deckTypes = deck.GroupBy(c => c.cardType).ToDictionary(g => g.Key, g => g.Count());
+                foreach (var kvp in deckTypes)
+                {
+                    Debug.Log($"{kvp.Key}: {kvp.Value}장");
+                }
+            }
+        }
+
+        [ContextMenu("Test Income Action")]
+        public void TestIncomeAction()
+        {
+            var currentPlayer = GetCurrentPlayer();
+            if (currentPlayer != null)
+            {
+                PerformAction(currentPlayer.playerId, ActionType.Income);
+                Debug.Log($"{currentPlayer.playerName}이 Income 액션을 수행했습니다.");
+            }
+        }
+
+        [ContextMenu("Test Tax Action")]
+        public void TestTaxAction()
+        {
+            var currentPlayer = GetCurrentPlayer();
+            if (currentPlayer != null)
+            {
+                PerformAction(currentPlayer.playerId, ActionType.Tax);
+                Debug.Log($"{currentPlayer.playerName}이 Tax 액션을 수행했습니다 (블러핑 가능).");
+            }
+        }
+
+        [ContextMenu("Add 10 Coins to Current Player")]
+        public void AddCoinsToCurrentPlayer()
+        {
+            var currentPlayer = GetCurrentPlayer();
+            if (currentPlayer != null)
+            {
+                currentPlayer.GainCoins(10);
+                Debug.Log($"{currentPlayer.playerName}이 10코인을 획득했습니다. 총 {currentPlayer.coins}코인");
+            }
+        }
+
+        // 덱 정보 표시용
+        public int GetDeckCount() => deck.Count;
+        public int GetAlivePlayers() => players.Count(p => p.isAlive);
+        
+        void OnValidate()
+        {
+            // Inspector 값이 변경될 때 호출됨
+            testPlayerCount = Mathf.Clamp(testPlayerCount, 1, maxPlayers);
         }
     }
 }
